@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+
+  vllm:
+    image: ghcr.io/sasha0552/vllm:latest
+    container_name: vllm
+
+    runtime: nvidia
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - ./models:/models
+
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+
+    command: >
+      --model /models/Qwen/Qwen3-8B-GPTQ-Int4
+      --served-model-name qwen3-8b
+      --host 0.0.0.0
+      --port 8000
+      --dtype float16
+      --quantization gptq
+      --max-model-len 8192
+      --max-num-batched-tokens 8192
+      --max-num-seqs 8                      
+      --block-size 16    
+      --gpu-memory-utilization 0.90  
+      --disable-custom-all-reduce
+
+
+    shm_size: 16g
+    ipc: host
+    restart: unless-stopped
+
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm
+
+    ports:
+      - "40000:4000"
+
+    volumes:
+      - ./litellm/config.yaml:/app/config.yaml
+
+    command: >
+      --config /app/config.yaml
+      --port 4000
+
+    restart: unless-stopped
