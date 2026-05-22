@@ -1,0 +1,15 @@
+model_list:
+  - model_name: qwen3-4b
+    litellm_params:
+      model: openai/qwen3-4b
+      api_base: http://vllm:8000/v1
+      api_key: sk-anything
+      use_chat_completions_api: true
+      # additional_drop_params: ["response_format"] 
+
+general_settings:
+  master_key: sk-HwMLcHVLpfDoPXD7P3yEQPENVLeDZJbj3OHozVv5eQYipLKO
+
+litellm_settings:
+  drop_params: true
+  # additional_drop_params: ["thinking", "output_config"]
