@@ -2,14 +2,24 @@ model_list:
   - model_name: qwen3-4b
     litellm_params:
       model: openai/qwen3-4b
-      api_base: http://vllm:8000/v1
+      api_base: http://vllm-llm:8000/v1
       api_key: sk-anything
       use_chat_completions_api: true
-      # additional_drop_params: ["response_format"] 
+
+  - model_name: qwen3-embedding
+    litellm_params:
+      model: openai/qwen3-embedding
+      api_base: http://vllm-embedding:8001/v1
+      api_key: sk-anything
+
+  - model_name: qwen3-reranker
+    litellm_params:
+      model: openai/qwen3-reranker
+      api_base: http://vllm-reranker:8002/v1
+      api_key: sk-anything
 
 general_settings:
   master_key: sk-HwMLcHVLpfDoPXD7P3yEQPENVLeDZJbj3OHozVv5eQYipLKO
 
 litellm_settings:
   drop_params: true
-  # additional_drop_params: ["thinking", "output_config"]
