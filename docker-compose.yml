@@ -8,120 +8,134 @@ volumes:
   postgres-data:
 
 services:
-
+  # ==================== LLM 服务 ====================
   vllm-llm:
     image: ghcr.io/sasha0552/vllm:latest
     container_name: vllm-llm
-
     runtime: nvidia
-
     ports:
       - "8000:8000"
-
     volumes:
       - ./models:/models
-
     environment:
       - CUDA_VISIBLE_DEVICES=0
-
     command: >
       --model /models/Qwen/Qwen3-4B-GPTQ-Int8
       --served-model-name qwen3-4b
       --host 0.0.0.0
       --port 8000
       --dtype float16
-      --swap-space 4
       --quantization gptq
       --reasoning-parser qwen3
-      --max-model-len 8192
-      --gpu-memory-utilization 0.70
+      --max-model-len 16384
+      --max-num-seqs 32
+      --gpu-memory-utilization 0.8
       --enable-auto-tool-choice
       --tool-call-parser hermes
-
-    shm_size: 16g
+    shm_size: 2g
     ipc: host
     restart: unless-stopped
     networks:
       - chdd-network
 
+  # ==================== Embedding 服务 ====================
+  # vllm-embedding:
+  #   image: ghcr.io/sasha0552/vllm:latest
+  #   container_name: vllm-embedding
+  #   runtime: nvidia
+  #   ports:
+  #     - "8001:8001"
+  #   volumes:
+  #     - ./models:/models
+  #   environment:
+  #     - CUDA_VISIBLE_DEVICES=0
+  #   command: >
+  #     --task embedding
+  #     --model /models/Qwen/Qwen3-Embedding-0.6B
+  #     --served-model-name qwen3-embedding
+  #     --host 0.0.0.0
+  #     --port 8001
+  #     --dtype float16
+  #     --swap-space 1
+  #     --max-model-len 2048
+  #     --max-num-seqs 64
+  #     --gpu-memory-utilization 0.1
+  #     --enforce-eager
+  #   shm_size: 1g
+  #   ipc: host
+  #   restart: unless-stopped
+  #   networks:
+  #     - chdd-network
+
+  # ==================== Embedding 服务 (CPU版) ====================
   vllm-embedding:
-    image: ghcr.io/sasha0552/vllm:latest
+    image: vllm/vllm-openai-cpu:latest-x86_64
     container_name: vllm-embedding
-
-    runtime: nvidia
-
-    ports:
-      - "8001:8001"
-
     volumes:
       - ./models:/models
-
     environment:
-      - CUDA_VISIBLE_DEVICES=0
-
-    command: >
-      --task embedding
+      # CPU后端专用KV Cache空间(GB)，替代gpu-memory-utilization
+      - VLLM_CPU_KVCACHE_SPACE=4
+      # 避免Docker中NUMA相关系统调用被seccomp拦截导致性能下降
+      - VLLM_CPU_OMP_THREADS_BIND=auto
+    cap_add:
+      - SYS_NICE
+    security_opt:
+      - seccomp=unconfined
+    command: |
       --model /models/Qwen/Qwen3-Embedding-0.6B
-      --served-model-name qwen3-embedding
       --host 0.0.0.0
       --port 8001
-      --dtype float16
-      --swap-space 2
-      --max-model-len 4096
-      --gpu-memory-utilization 0.1
-
+      --served-model-name qwen3-embedding
+      --dtype bfloat16
+      --max-model-len 2048
+      --max-num-seqs 64
     shm_size: 4g
     ipc: host
     restart: unless-stopped
     networks:
       - chdd-network
 
-  vllm-reranker:
-    image: ghcr.io/sasha0552/vllm:latest
-    container_name: vllm-reranker
+  # ==================== Reranker 服务 ====================
+  # vllm-reranker:
+  #   image: ghcr.io/sasha0552/vllm:latest
+  #   container_name: vllm-reranker
+  #   runtime: nvidia
+  #   ports:
+  #     - "8002:8002"
+  #   volumes:
+  #     - ./models:/models
+  #   environment:
+  #     - CUDA_VISIBLE_DEVICES=0
+  #   command: >
+  #     --task score
+  #     --model /models/Qwen/Qwen3-Reranker-0.6B
+  #     --served-model-name qwen3-reranker
+  #     --host 0.0.0.0
+  #     --port 8002
+  #     --dtype float16
+  #     --swap-space 1
+  #     --max-model-len 2048
+  #     --max-num-seqs 64
+  #     --gpu-memory-utilization 0.1
+  #     --enforce-eager
+  #   shm_size: 1g
+  #   ipc: host
+  #   restart: unless-stopped
+  #   networks:
+  #     - chdd-network
 
-    runtime: nvidia
-
-    ports:
-      - "8002:8002"
-
-    volumes:
-      - ./models:/models
-
-    environment:
-      - CUDA_VISIBLE_DEVICES=0
-
-    command: >
-      --task score
-      --model /models/Qwen/Qwen3-Reranker-0.6B
-      --served-model-name qwen3-reranker
-      --host 0.0.0.0
-      --port 8002
-      --dtype float16
-      --swap-space 2
-      --max-model-len 4096
-      --gpu-memory-utilization 0.1
-
-    shm_size: 4g
-    ipc: host
-    restart: unless-stopped
-    networks:
-      - chdd-network
-
+  # ==================== LiteLLM 网关 ====================
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
     container_name: litellm
-
     ports:
       - "4000:4000"
-
     volumes:
       - ./litellm/config.yaml:/app/config.yaml
-
     command: >
       --config /app/config.yaml
       --port 4000
-
     restart: unless-stopped
     networks:
       - chdd-network

@@ -12,12 +12,6 @@ model_list:
       api_base: http://vllm-embedding:8001/v1
       api_key: sk-anything
 
-  - model_name: qwen3-reranker
-    litellm_params:
-      model: openai/qwen3-reranker
-      api_base: http://vllm-reranker:8002/v1
-      api_key: sk-anything
-
 general_settings:
   master_key: sk-HwMLcHVLpfDoPXD7P3yEQPENVLeDZJbj3OHozVv5eQYipLKO
 
