@@ -68,33 +68,33 @@ services:
   #     - chdd-network
 
   # ==================== Embedding 服务 (CPU版) ====================
-  vllm-embedding:
-    image: vllm/vllm-openai-cpu:latest-x86_64
-    container_name: vllm-embedding
-    volumes:
-      - ./models:/models
-    environment:
-      # CPU后端专用KV Cache空间(GB)，替代gpu-memory-utilization
-      - VLLM_CPU_KVCACHE_SPACE=4
-      # 避免Docker中NUMA相关系统调用被seccomp拦截导致性能下降
-      - VLLM_CPU_OMP_THREADS_BIND=auto
-    cap_add:
-      - SYS_NICE
-    security_opt:
-      - seccomp=unconfined
-    command: |
-      --model /models/Qwen/Qwen3-Embedding-0.6B
-      --host 0.0.0.0
-      --port 8001
-      --served-model-name qwen3-embedding
-      --dtype bfloat16
-      --max-model-len 2048
-      --max-num-seqs 64
-    shm_size: 4g
-    ipc: host
-    restart: unless-stopped
-    networks:
-      - chdd-network
+  # vllm-embedding:
+  #   image: vllm/vllm-openai-cpu:latest-x86_64
+  #   container_name: vllm-embedding
+  #   volumes:
+  #     - ./models:/models
+  #   environment:
+  #     # CPU后端专用KV Cache空间(GB)，替代gpu-memory-utilization
+  #     - VLLM_CPU_KVCACHE_SPACE=4
+  #     # 避免Docker中NUMA相关系统调用被seccomp拦截导致性能下降
+  #     - VLLM_CPU_OMP_THREADS_BIND=auto
+  #   cap_add:
+  #     - SYS_NICE
+  #   security_opt:
+  #     - seccomp=unconfined
+  #   command: |
+  #     --model /models/Qwen/Qwen3-Embedding-0.6B
+  #     --host 0.0.0.0
+  #     --port 8001
+  #     --served-model-name qwen3-embedding
+  #     --dtype bfloat16
+  #     --max-model-len 2048
+  #     --max-num-seqs 64
+  #   shm_size: 4g
+  #   ipc: host
+  #   restart: unless-stopped
+  #   networks:
+  #     - chdd-network
 
   # ==================== Reranker 服务 ====================
   # vllm-reranker:
